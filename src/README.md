@@ -139,14 +139,6 @@ def my_function(param1, param2):
 my_function(1, 2)
 ```
 
-## Documentation
-
-For more detailed documentation, including advanced usage, configuration options, and examples, please refer to the `docs/` directory or visit the online documentation at [https://yourdocslink.com](https://yourdocslink.com).
-
-## Contributing
-
-Contributions are welcome! Please read the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines on how to contribute to this project.
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
