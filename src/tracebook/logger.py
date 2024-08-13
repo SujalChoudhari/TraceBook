@@ -1,88 +1,60 @@
-# src/traebook/logger.py
-
 import logging
-import sys
+from typing import Literal
 
-from tracebook.utils import format_stack_trace
-
-from .config import LogLevel
+from tracebook.config import Config, LogLevel
+from tracebook.remote_handler import log_push_file_to_remote_server
+from tracebook.utils import current_timestamp
 
 
 class Logger:
-    def __init__(self, log_level=LogLevel.INFO, output="console", file_path=None):
-        """
-        Initialize the Logger.
+    def __init__(self, config: Config):
+        self.config = config
 
-        Args:
-            log_level (LogLevel): The minimum level of logs to capture.
-            output (str): Where to send the logs ('console' or 'file').
-            file_path (str): The path to the log file (required if output is 'file').
-        """
-        self.log_level = log_level
-        self.output = output
+        with open(self.config.file_path, "a") as file:
+            file.write(f"=== Starting TraceBook at {current_timestamp()} ===\n")
+        if self.config.remote_config.use:
+            log_push_file_to_remote_server(self.config)
 
-        if output == "file" and file_path is None:
-            raise ValueError("file_path must be specified when output is 'file'")
+    def _save_message(self, message: str):
+        if self.config.output == "console" or self.config.output == "both":
+            if self.config.log_level == LogLevel.DEBUG:
+                logging.debug(message)
+            elif self.config.log_level == LogLevel.INFO:
+                logging.info(message)
+            elif self.config.log_level == LogLevel.WARNING:
+                logging.warning(message)
+            elif self.config.log_level == LogLevel.ERROR:
+                logging.error(message)
+            elif self.config.log_level == LogLevel.CRITICAL:
+                logging.critical(message)
 
-        self.logger = logging.getLogger("TraceBookLogger")
-        self.logger.setLevel(log_level)
+        if self.config.output == "file" or self.config.output == "both":
+            with open(self.config.file_path, "a") as file:
+                file.write(message + "\n")
+            if self.config.remote_config.use:
+                log_push_file_to_remote_server(self.config)
 
-        if output == "console":
-            handler = logging.StreamHandler(sys.stdout)
-        elif output == "file":
-            handler = logging.FileHandler(file_path)
+    def log_function_enter(self, function_name: str, parameters: str):
+        message = self._generate_message(
+            ">", f"Entering function {function_name} with parameters: {parameters}"
+        )
+        self._save_message(message)
 
-        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-        handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
+    def log_function_exit(self, function_name: str, result: str):
+        message = self._generate_message(
+            "<", f"Exiting function {function_name} with result: {result}"
+        )
+        self._save_message(message)
 
-    def log_function_call(self, func_name, *args, **kwargs):
-        """
-        Log the call to a function, including parameters.
+    def log_function_call(self, function_name: str, *args, **kwargs):
+        parameters = f"Arguments: {args}, Keyword Arguments: {kwargs}"
+        self.log_function_enter(function_name, parameters)
 
-        Args:
-            func_name (str): The name of the function being logged.
-            *args: Positional arguments passed to the function.
-            **kwargs: Keyword arguments passed to the function.
-        """
-        if self.log_level <= LogLevel.INFO:
-            self.logger.info(
-                f"Function '{func_name}' called with args: {args} and kwargs: {kwargs}"
-            )
+    def log_exception(self, function_name: str, exception: Exception):
+        message = self._generate_message(
+            "|", f"Exception in function {function_name}: {str(exception)}"
+        )
+        self._save_message(message)
 
-    def log_result(self, func_name, result):
-        """
-        Log the result of a function.
-
-        Args:
-            func_name (str): The name of the function.
-            result: The result returned by the function.
-        """
-        if self.log_level <= LogLevel.INFO:
-            self.logger.info(f"Function '{func_name}' returned: {result}")
-
-    def log_execution_time(self, func_name, execution_time):
-        """
-        Log the execution time of a function.
-
-        Args:
-            func_name (str): The name of the function.
-            execution_time (float): The time taken to execute the function.
-        """
-        if self.log_level <= LogLevel.INFO:
-            self.logger.info(
-                f"Function '{func_name}' executed in {execution_time:.6f} seconds"
-            )
-
-    def log_exception(self, func_name, exception):
-        """
-        Log an exception that occurred during a function call.
-
-        Args:
-            func_name (str): The name of the function.
-            exception (Exception): The exception raised.
-        """
-        if self.log_level <= LogLevel.ERROR:
-            self.logger.error(
-                f"Exception in function '{func_name}': {format_stack_trace(exception)}"
-            )
+    def _generate_message(self, operation_symbol: Literal[">", "<", "|"], message):
+        return f"[{current_timestamp()}] {operation_symbol} {message}"
