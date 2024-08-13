@@ -31,91 +31,76 @@ pip install .
 
 ### Basic Logging
 
-To log function calls, parameters, return values, and execution times, you can use the logging functionality:
-
 ```python
 from tracebook import Logger
 from tracebook.config import Config, LogLevel
 
-logger = Logger(
-    config=Config(log_level=LogLevel.INFO, output="both", file_path="test.log")
-)
+logger = Logger(config=Config(log_level=LogLevel.INFO, output="both", file_path="app.log"))
 
-@logger.trace(log_resources=True)
-def fact(x):
-    if x == 0:
-        return 1
-    else:
-        return x * fact(x - 1)
+@logger.trace()
+def add(a, b):
+    return a + b
 
-@logger.trace(log_resources=True)
-def fibonacci(n):
-    if n <= 0:
-        return 0
-    elif n == 1:
-        return 1
-    else:
-        return fibonacci(n - 1) + fibonacci(n - 2)
-
-@logger.trace(log_resources=True)
-def complex_operation(x):
-    fact_result = fact(x)
-    fib_result = fibonacci(x)
-    return fact_result + fib_result
-
-if __name__ == "__main__":
-    while True:
-        x = int(input("Enter a number: "))
-        result = complex_operation(x)
-        print(f"Result of complex operation with {x}: {result}")
+result = add(3, 5)
+print(f"Result: {result}")
 ```
 
-### Using Decorators
-
-To simplify logging, you can use the provided decorators:
+### Logging with Resource Tracking
 
 ```python
-from tracebook import Logger
-from tracebook.config import Config, LogLevel
-
-logger = Logger(
-    config=Config(log_level=LogLevel.INFO, output="both", file_path="test.log")
-)
-
 @logger.trace(log_resources=True)
-def my_function(param1, param2):
-    return param1 + param2
+def compute_factorial(n):
+    if n == 0:
+        return 1
+    return n * compute_factorial(n - 1)
 
-my_function(1, 2)
+compute_factorial(5)
 ```
 
-### Remote Log Transmission
-
-To send logs to a remote server, configure the remote settings in `Config`:
+### Using Different Log Levels
 
 ```python
-from tracebook import Logger
-from tracebook.config import Config, LogLevel, RemoteConfig
+logger.debug("Debugging information")
+logger.info("General information")
+logger.warning("Warning: resource running low")
+logger.error("Error occurred: unable to connect")
+logger.critical("Critical: system shutdown imminent")
+```
 
-logger = Logger(
+### Exception Handling
+
+```python
+@logger.trace()
+def divide(a, b):
+    return a / b
+
+try:
+    divide(10, 0)
+except ZeroDivisionError:
+    logger.error("Attempted division by zero")
+```
+
+### Remote Logging Configuration
+
+```python
+from tracebook.config import RemoteConfig
+
+remote_logger = Logger(
     config=Config(
         log_level=LogLevel.INFO,
-        output="file",
-        file_path="test.log",
+        output="remote",
         remote_config=RemoteConfig(
-            url="https://yourserver.com/log",
-            headers={"Authorization": "Bearer yourapikey"}
+            url="https://logs.example.com",
+            headers={"Authorization": "Bearer your-token"}
         )
     )
 )
 
-@logger.trace(log_resources=True)
-def my_function(param1, param2):
-    return param1 + param2
-
-my_function(1, 2)
+@remote_logger.trace()
+def important_function():
+    # Function logic here
+    pass
 ```
-
 ### Configuring Log Levels and Output
 
 Control the verbosity of logs by setting the log level and choosing the output:
@@ -138,6 +123,7 @@ def my_function(param1, param2):
 
 my_function(1, 2)
 ```
+
 
 ## License
 

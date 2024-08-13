@@ -2,6 +2,8 @@
 
 **Trace Book** is a Python package designed for comprehensive code bookkeeping. It provides tools to log function calls, parameters, return values, and execution times. Additionally, it supports decorators for easy integration, automatic error tracking, and remote log transmission, all with customizable log levels and output configurations.
 
+![UI](./example/example-ui.png)
+
 ## Features
 
 - **Function Logging**: Track function calls, parameters, return values, and execution times.
