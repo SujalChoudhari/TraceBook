@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import mock_open, patch, ANY
 
 from tracebook.config import Config, LogLevel, RemoteConfig
-from tracebook.logger import Logger
+from tracebook.logger import LoggerCore
 
 
 class TestLogger(unittest.TestCase):
@@ -13,7 +13,7 @@ class TestLogger(unittest.TestCase):
             file_path="test.log",
             remote_config=RemoteConfig(None, None, True),
         )
-        self.logger = Logger(self.config)
+        self.logger = LoggerCore(self.config)
 
     @patch("tracebook.logger.log_push_file_to_remote_server")
     @patch("builtins.open", new_callable=mock_open)
@@ -66,7 +66,7 @@ class TestLoggerDecorators(unittest.TestCase):
             file_path="test.log",
             remote_config=RemoteConfig(None, None, True),
         )
-        self.logger = Logger(self.config)
+        self.logger = LoggerCore(self.config)
 
     @patch("tracebook.logger.Logger.log_function_call")
     @patch("tracebook.logger.Logger.log_function_exit")

@@ -104,6 +104,7 @@ class RealTimeDashboard:
                                                         "padding": "15px",
                                                         "color": "#333",
                                                         "borderRadius": "10px",
+                                                        "fontFamily": "monospace",
                                                     },
                                                 )
                                             ]
@@ -132,19 +133,6 @@ class RealTimeDashboard:
             [Input("interval-component", "n_intervals")],
         )(self.update_graph)
 
-        
-        @self.dash_app.server.context_processor
-        def inject_auto_scroll_script():
-            return dict(
-                auto_scroll_script="""
-                <script>
-                setInterval(function() {
-                    var logWindow = document.getElementById('log-window');
-                    logWindow.scrollTop = logWindow.scrollHeight;
-                }, 1000);
-                </script>
-                """
-            )
 
     def update_graph(self, n):
         cpu_figure = {
@@ -314,13 +302,24 @@ class RealTimeDashboard:
                         [
                             html.Span(
                                 info_tag,
-                                style={"color": "#007bff", "fontWeight": "bold"},
+                                style={"color": "#ff7070", "fontWeight": "bold"},
                             ),
-                            html.Span(f" {date} ", style={"color": "#6c757d"}),
-                            html.Span(time, style={"color": "#17a2b8"}),
-                            html.Span(f" {content}", style={"color": "#333"}),
+                            html.Span(f" {time} ", style={"color": "#ff0000"}),
+                            html.Span(
+                                f" {op} ",
+                                style={
+                                    "color": "#ff7070",
+                                    "padding-left": f"{indent * 20}px",
+                                },
+                            ),
+                            html.Span(
+                                f" {content} ",
+                                style={
+                                    "color": "#333",
+                                },
+                            ),
                         ],
-                        style={"margin": "0", "padding-left": f"{indent * 20}px"},
+                        style={"margin": "0"},
                     )
 
                 log_entries.append(log_entry)
