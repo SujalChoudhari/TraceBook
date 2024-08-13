@@ -38,6 +38,8 @@ class Config:
     def __init__(
         self,
         log_level=LogLevel.INFO,
+        show_web = True,
+        web_port=2234,
         output=Literal["console", "file", "both"],
         file_path=None,
         remote_config: RemoteConfig = None,
@@ -53,6 +55,8 @@ class Config:
         """
         self.log_level = log_level
         self.output = output
+        self.show_web = show_web
+        self.web_port = web_port
         self.file_path = file_path
         self.remote_config = remote_config or RemoteConfig(None, None, False)
 
