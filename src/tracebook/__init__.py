@@ -1,5 +1,5 @@
 from .config import Config, RemoteConfig, LogLevel
-from .decorators import Logger
+from .logger import Logger
 
 __all__ = [
     "Logger",

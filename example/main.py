@@ -10,7 +10,10 @@ logger = Logger(
 @logger.trace(log_resources=True)
 def fact(x):
     if x == 0:
-        return 1
+        logger.critical("A print statemment above warning")
+        logger.warning("A print statemment above info")
+        logger.info("A print statemment above 0/0")
+        return 0/0
     else:
         return x * fact(x - 1)
 

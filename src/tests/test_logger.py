@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import mock_open, patch, ANY
 
 from tracebook.config import Config, LogLevel, RemoteConfig
-from tracebook.logger import LoggerCore
+from tracebook.logger_core import LoggerCore
 
 
 class TestLogger(unittest.TestCase):

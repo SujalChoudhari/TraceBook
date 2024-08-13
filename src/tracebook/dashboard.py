@@ -54,7 +54,7 @@ class RealTimeDashboard:
                     target="_blank",
                 ),
                 html.H1(
-                    "TraceBook Real-Time Dashboard",
+                    "TraceBook Dashboard",
                     style={
                         "textAlign": "center",
                         "color": "#0056b3",  # Darker blue
@@ -133,7 +133,6 @@ class RealTimeDashboard:
             [Input("interval-component", "n_intervals")],
         )(self.update_graph)
 
-
     def update_graph(self, n):
         cpu_figure = {
             "data": [
@@ -207,7 +206,8 @@ class RealTimeDashboard:
             parts = log.split(" ", 3)
             if len(parts) >= 4:
                 info_tag, date, time, rest = parts
-
+                info_tag = self.format_tag(info_tag)
+                info_tag_color = self.get_color_for_tag(info_tag)
                 op = rest[0]
                 content = rest[2:]
 
@@ -220,10 +220,9 @@ class RealTimeDashboard:
                             [
                                 html.Span(
                                     info_tag,
-                                    style={"color": "#007bff", "fontWeight": "bold"},
+                                    style={"color": info_tag_color, "fontWeight": "bold"},
                                 ),
-                                # html.Span(f" {date} ", style={"color": "#6c757d"}),
-                                html.Span(time, style={"color": "#17a2b8"}),
+                                html.Span(f" {time} ", style={"color": "#17a2b8"}),
                                 html.Span(
                                     f" {op} ",
                                     style={
@@ -251,10 +250,9 @@ class RealTimeDashboard:
                             [
                                 html.Span(
                                     info_tag,
-                                    style={"color": "#007bff", "fontWeight": "bold"},
+                                    style={"color": info_tag_color, "fontWeight": "bold"},
                                 ),
-                                # html.Span(f" {date} ", style={"color": "#6c757d"}),
-                                html.Span(time, style={"color": "#17a2b8"}),
+                                html.Span(f" {time} ", style={"color": "#17a2b8"}),
                                 html.Span(
                                     f" {op} ",
                                     style={
@@ -274,16 +272,19 @@ class RealTimeDashboard:
                                 ),
                             ]
                         )
-                elif op == "*":
+                elif op == "|":
                     cpu, mem = content.split(" ", 1)
+                    if "%" not in cpu:
+                        text_color = "#17a2b8"
+                    else:
+                        text_color = "#dc3545"
                     log_entry = html.Div(
                         [
                             html.Span(
                                 info_tag,
-                                style={"color": "#007bff", "fontWeight": "bold"},
+                                style={"color": info_tag_color, "fontWeight": "bold"},
                             ),
-                            # html.Span(f" {date} ", style={"color": "#6c757d"}),
-                            html.Span(time, style={"color": "#17a2b8"}),
+                            html.Span(f" {time} ", style={"color": "#17a2b8"}),
                             html.Span(
                                 f" {op} ",
                                 style={
@@ -293,16 +294,16 @@ class RealTimeDashboard:
                                     "padding-left": f"{indent * 20}px",
                                 },
                             ),
-                            html.Span(cpu, style={"color": "#d63384"}),
-                            html.Span(f" {mem}", style={"color": "#0dcaf0"}),
+                            html.Span(f" {cpu} ", style={"color": text_color}),
+                            html.Span(f" {mem} ", style={"color": text_color}),
                         ]
                     )
-                else:
+                elif op == "*":
                     log_entry = html.Div(
                         [
                             html.Span(
                                 info_tag,
-                                style={"color": "#ff7070", "fontWeight": "bold"},
+                                style={"color": info_tag_color, "fontWeight": "bold"},
                             ),
                             html.Span(f" {time} ", style={"color": "#ff0000"}),
                             html.Span(
@@ -341,7 +342,7 @@ class RealTimeDashboard:
     def parse_log_line(self, line):
         # Example log line: [INFO] 2024-08-13 14:21:50 * 7.40% 47.04 MB
         match = re.match(
-            r"\[INFO\] (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) \* (\d+\.\d+)% (\d+\.\d+) MB",
+            r"\[INFO\] (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) \| (\d+\.\d+)% (\d+\.\d+) MB",
             line,
         )
         if match:
@@ -373,6 +374,31 @@ class RealTimeDashboard:
             f"Dashboard is running in the background at http://localhost:{self.port}."
         )
 
+    def format_tag(self, tag):
+        if tag == "[INFO]":
+            return "[INF]"
+        elif tag == "[WARNING]":
+            return "[WRN]"
+        elif tag == "[ERROR]":
+            return "[ERR]"
+        elif tag == "[CRITICAL]":
+            return "[CRI]"
+        elif tag == "[DEBUG]":
+            return "[DBG]"
+        else:
+            return tag
+
+    def get_color_for_tag(self, tag):
+        color = "#333"
+        if tag == "[WRN]":
+            color = "#ffc107"
+        elif tag == "[ERR]":
+            color = "#dc3545"
+        elif tag == "[CRI]":
+            color = "#ff3545"
+        elif tag == "[DBG]":
+            color = "#6c757d"
+        return color
 
 # Usage:
 if __name__ == "__main__":
