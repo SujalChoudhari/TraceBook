@@ -1,15 +1,14 @@
 import unittest
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import mock_open, patch
 
 from tracebook.config import Config, LogLevel, RemoteConfig
 from tracebook.logger import Logger
-from tracebook.utils import current_timestamp
 
 class TestLogger(unittest.TestCase):
     def setUp(self):
         self.config = Config(
             output="both",
-            log_level=LogLevel.DEBUG,
+            log_level=LogLevel.DEBUG,  # noqa: F821
             file_path="test.log",
             remote_config=RemoteConfig(None, None, True),
         )
@@ -57,6 +56,7 @@ class TestLogger(unittest.TestCase):
     def test_generate_message(self, mock_timestamp):
         result = self.logger._generate_message(">", "Test message")
         self.assertEqual(result, "[timestamp] > Test message")
+
 
 if __name__ == "__main__":
     unittest.main()
