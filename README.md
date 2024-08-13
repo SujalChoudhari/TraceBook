@@ -34,16 +34,40 @@ pip install .
 To log function calls, parameters, return values, and execution times, you can use the logging functionality:
 
 ```python
-from tracebook.logger import Logger
+from tracebook import Logger
+from tracebook.config import Config, LogLevel
 
-logger = Logger()
+logger = Logger(
+    config=Config(log_level=LogLevel.INFO, output="both", file_path="test.log")
+)
 
-def my_function(param1, param2):
-    result = param1 + param2
-    logger.log_function_call('my_function', param1, param2, result)
-    return result
+@logger.trace(log_resources=True)
+def fact(x):
+    if x == 0:
+        return 1
+    else:
+        return x * fact(x - 1)
 
-my_function(1, 2)
+@logger.trace(log_resources=True)
+def fibonacci(n):
+    if n <= 0:
+        return 0
+    elif n == 1:
+        return 1
+    else:
+        return fibonacci(n - 1) + fibonacci(n - 2)
+
+@logger.trace(log_resources=True)
+def complex_operation(x):
+    fact_result = fact(x)
+    fib_result = fibonacci(x)
+    return fact_result + fib_result
+
+if __name__ == "__main__":
+    while True:
+        x = int(input("Enter a number: "))
+        result = complex_operation(x)
+        print(f"Result of complex operation with {x}: {result}")
 ```
 
 ### Using Decorators
@@ -51,9 +75,14 @@ my_function(1, 2)
 To simplify logging, you can use the provided decorators:
 
 ```python
-from tracebook.decorators import log_function
+from tracebook import Logger
+from tracebook.config import Config, LogLevel
 
-@log_function
+logger = Logger(
+    config=Config(log_level=LogLevel.INFO, output="both", file_path="test.log")
+)
+
+@logger.trace(log_resources=True)
 def my_function(param1, param2):
     return param1 + param2
 
@@ -62,52 +91,50 @@ my_function(1, 2)
 
 ### Remote Log Transmission
 
-To send logs to a remote server:
+To send logs to a remote server, configure the remote settings in `Config`:
 
 ```python
-from tracebook.remote_handler import RemoteLogger
+from tracebook import Logger
+from tracebook.config import Config, LogLevel, RemoteConfig
 
-remote_logger = RemoteLogger(server_url="https://yourserver.com/log", api_key="yourapikey")
+logger = Logger(
+    config=Config(
+        log_level=LogLevel.INFO,
+        output="file",
+        file_path="test.log",
+        remote_config=RemoteConfig(
+            url="https://yourserver.com/log",
+            headers={"Authorization": "Bearer yourapikey"}
+        )
+    )
+)
 
+@logger.trace(log_resources=True)
 def my_function(param1, param2):
-    result = param1 + param2
-    remote_logger.log_function_call('my_function', param1, param2, result)
-    return result
+    return param1 + param2
 
 my_function(1, 2)
 ```
 
-### Configuring Log Levels
+### Configuring Log Levels and Output
 
-Control the verbosity of logs by setting the log level:
-
-```python
-from tracebook.logger import Logger
-from tracebook.config import LogLevel
-
-logger = Logger(log_level=LogLevel.DEBUG)
-
-def my_function(param1, param2):
-    result = param1 + param2
-    logger.log_function_call('my_function', param1, param2, result)
-    return result
-
-my_function(1, 2)
-```
-
-### Configuring Output
-
-You can choose whether to log to a file or send logs to a remote server by configuring the output:
+Control the verbosity of logs by setting the log level and choosing the output:
 
 ```python
-from tracebook.logger import Logger
+from tracebook import Logger
+from tracebook.config import Config, LogLevel
 
-logger = Logger(output="file", file_path="logs.txt")
+logger = Logger(
+    config=Config(
+        log_level=LogLevel.DEBUG,
+        output="both",
+        file_path="logs.txt"
+    )
+)
 
+@logger.trace(log_resources=True)
 def my_function(param1, param2):
-    result = param1 + param2
-    logger.log_function_call('my_function', param1, param2, result)
-    return result
+    return param1 + param2
 
 my_function(1, 2)
 ```
