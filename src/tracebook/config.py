@@ -3,12 +3,31 @@
 from enum import Enum
 from typing import Literal
 
+
 class LogLevel(Enum):
     DEBUG = 10
     INFO = 20
     WARNING = 30
     ERROR = 40
     CRITICAL = 50
+
+
+class RemoteConfig:
+    """
+    Configuration for remote logging.
+    """
+
+    def __init__(self, url, headers, use=True):
+        """
+        Initialize the remote configuration.
+
+        Args:
+            url (str): The URL of the remote logging server.
+            token (str): The authentication token for the remote logging server.
+        """
+        self.url = url
+        self.headers = headers
+        self.use = use
 
 
 class Config:
@@ -21,7 +40,7 @@ class Config:
         log_level=LogLevel.INFO,
         output=Literal["console", "file", "both"],
         file_path=None,
-        remote_config=None,
+        remote_config: RemoteConfig = None,
     ):
         """
         Initialize the configuration.
@@ -35,7 +54,7 @@ class Config:
         self.log_level = log_level
         self.output = output
         self.file_path = file_path
-        self.remote_config = remote_config or {}
+        self.remote_config = remote_config or RemoteConfig(None, None, False)
 
     def get_log_level(self):
         """
@@ -72,4 +91,3 @@ class Config:
             dict: The remote logging configuration.
         """
         return self.remote_config
-

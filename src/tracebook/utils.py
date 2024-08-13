@@ -1,7 +1,5 @@
-# src/bookkeeping/utils.py
-
-import traceback
 import time
+import traceback
 
 
 def format_stack_trace(exception):
