@@ -1,5 +1,7 @@
 import time
 import traceback
+import psutil
+import os
 
 
 def format_stack_trace(exception):
@@ -44,3 +46,19 @@ def time_execution(func):
     end_time = time.time()
     execution_time = end_time - start_time
     return result, execution_time
+
+
+def get_memory_usage() -> str:
+    """
+    Returns the memory usage of the current process in MB.
+    """
+    process = psutil.Process(os.getpid())
+    memory_info = process.memory_info()
+    return f"{memory_info.rss / 1024 ** 2:.2f} MB"
+
+
+def get_cpu_usage() -> str:
+    """
+    Returns the CPU usage percentage of the system.
+    """
+    return f"{psutil.cpu_percent(interval=1):.2f}%"

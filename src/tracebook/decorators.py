@@ -1,123 +1,96 @@
-# src/bookkeeping/decorators.py
-
+# tracebook/decorators.py
 from functools import wraps
-
-from .config import LogLevel
-from .logger import Logger
-from .utils import time_execution
-
-# Create a default logger instance
-default_logger = Logger(log_level=LogLevel.INFO, output="console")
+from tracebook.utils import get_memory_usage, get_cpu_usage
+from tracebook.logger import Logger  # Assuming the Logger class is in logger.py
 
 
-def log_function(logger=default_logger):
-    """
-    Decorator to log function calls, arguments, results, and execution time.
-
-    Args:
-        logger (Logger): An instance of the Logger class.
-
-    Returns:
-        callable: The decorated function.
-    """
-
+def trace(
+    logger: Logger,
+    log_inputs: bool = True,
+    log_outputs: bool = True,
+    log_exceptions: bool = True,
+    log_resources: bool = False,
+):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            # Log function call
-            logger.log_function_call(func.__name__, *args, **kwargs)
+            if log_inputs:
+                logger.log_function_call(func.__name__, *args, **kwargs)
             try:
-                # Measure execution time and get result
-                result, exec_time = time_execution(lambda: func(*args, **kwargs))
-                # Log result and execution time
-                logger.log_result(func.__name__, result)
-                logger.log_execution_time(func.__name__, exec_time)
+                result = func(*args, **kwargs)
+                if log_outputs:
+                    logger.log_function_exit(func.__name__, str(result))
                 return result
             except Exception as e:
-                # Log exception
-                logger.log_exception(func.__name__, e)
-                raise  # Re-raise the exception after logging
+                if log_exceptions:
+                    logger.log_exception(func.__name__, e)
+                raise
+            finally:
+                if log_resources:
+                    cpu_usage = get_cpu_usage()
+                    memory_usage = get_memory_usage()
+                    logger.log_details(
+                        f"CPU Usage: {cpu_usage}, Memory Usage: {memory_usage}"
+                    )
+        return wrapper
+
+    return decorator
+
+
+def trace_inputs(logger: Logger):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            logger.log_function_call(func.__name__, *args, **kwargs)
+            return func(*args, **kwargs)
 
         return wrapper
 
     return decorator
 
 
-def log_function_call(logger=default_logger):
-    """
-    Decorator to log function calls and arguments.
-
-    Args:
-        logger (Logger): An instance of the Logger class.
-
-    Returns:
-        callable: The decorated function.
-    """
-
+def trace_outputs(logger: Logger):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            # Log function call
-            logger.log_function_call(func.__name__, *args, **kwargs)
+            result = func(*args, **kwargs)
+            logger.log_function_exit(func.__name__, str(result))
+            return result
+
+        return wrapper
+
+    return decorator
+
+
+def trace_exceptions(logger: Logger):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
             except Exception as e:
-                # Log exception
                 logger.log_exception(func.__name__, e)
-                raise  # Re-raise the exception after logging
+                raise
 
         return wrapper
 
     return decorator
 
 
-def log_result(logger=default_logger):
-    """
-    Decorator to log function results.
-
-    Args:
-        logger (Logger): An instance of the Logger class.
-
-    Returns:
-        callable: The decorated function.
-    """
-
+def trace_resources(logger: Logger):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            try:
-                result = func(*args, **kwargs)
-                # Log result
-                logger.log_result(func.__name__, result)
-                return result
-            except Exception as e:
-                # Log exception
-                logger.log_exception(func.__name__, e)
-                raise  # Re-raise the exception after logging
+            import time
 
-        return wrapper
-
-    return decorator
-
-
-def log_execution_time(logger=default_logger):
-    """
-    Decorator to log the execution time of a function.
-
-    Args:
-        logger (Logger): An instance of the Logger class.
-
-    Returns:
-        callable: The decorated function.
-    """
-
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            # Measure execution time and get result
-            result, exec_time = time_execution(lambda: func(*args, **kwargs))
-            # Log execution time
-            logger.log_execution_time(func.__name__, exec_time)
+            start_time = time.time()
+            result = func(*args, **kwargs)
+            end_time = time.time()
+            cpu_usage = get_cpu_usage()
+            memory_usage = get_memory_usage()
+            logger._save_message(
+                f"Execution Time: {end_time - start_time} seconds, CPU Usage: {cpu_usage}, Memory Usage: {memory_usage}"
+            )
             return result
 
         return wrapper

@@ -56,5 +56,9 @@ class Logger:
         )
         self._save_message(message)
 
+    def log_details(self, message: str):
+        message = self._generate_message("*", f"Details: {message}")
+        self._save_message(message)
+
     def _generate_message(self, operation_symbol: Literal[">", "<", "|"], message):
         return f"[{current_timestamp()}] {operation_symbol} {message}"
