@@ -18,9 +18,7 @@ class LoggerCore:
         if self.config.web_config.is_active:
             from tracebook.dashboard import RealTimeDashboard
 
-            self.dashboard = RealTimeDashboard(
-                self.config
-            )
+            self.dashboard = RealTimeDashboard(self.config)
             self.dashboard.run()
         else:
             self.dashboard = None
@@ -33,10 +31,20 @@ class LoggerCore:
             self._log_to_console(full_message, level)
 
         if self.config.output == "file" or self.config.output == "both":
-            with open(self.config.file_path, "a") as file:
-                file.write(full_message + "\n")
-            if self.config.remote_config.use:
-                log_push_file_to_remote_server(self.config)
+            self._write_to_file(full_message)
+
+    def _write_to_file(self, message: str):
+        with open(self.config.file_path, "a") as file:
+            file.write(message + "\n")
+
+        # Check if log file has more than 500 entries and trim older entries
+        with open(self.config.file_path, "r") as file:
+            lines = file.readlines()
+
+        if len(lines) > 500:
+            # Keep only the last 500 entries
+            with open(self.config.file_path, "w") as file:
+                file.writelines(lines[-500:])
 
     def _log_to_console(self, message: str, level: LogLevel):
         log_method = {
@@ -63,6 +71,9 @@ class LoggerCore:
     def log_exception(self, function_name: str, exception: Exception):
         message = self._generate_message("*", f"{function_name} {str(exception)}")
         self._save_message(message, LogLevel.ERROR)
+        if self.config.remote_config.use:
+            self._save_message(self._generate_message("|", f"{function_name} pushed log to remote server"), LogLevel.INFO)
+            log_push_file_to_remote_server(self.config)
 
     def log_details(self, message: str, level: LogLevel = LogLevel.INFO):
         message = self._generate_message("|", message)

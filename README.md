@@ -2,7 +2,7 @@
 
 **Trace Book** is a Python package designed for comprehensive code bookkeeping. It provides tools to log function calls, parameters, return values, and execution times. Additionally, it supports decorators for easy integration, automatic error tracking, and remote log transmission, all with customizable log levels and output configurations.
 
-![UI](https://raw.githubusercontent.com/SujalChoudhari/TraceBook/main/example/example-ui.png)
+![UI](./example/example-ui.png)
 
 ## Features
 
@@ -11,7 +11,8 @@
 - **Decorators**: Simplify logging with decorators that track function parameters and results.
 - **Remote Log Transmission**: Securely send logs to a remote server.
 - **Customizable Log Levels**: Control log verbosity with DEBUG, INFO, WARNING, and ERROR levels.
-- **Configurable Output**: Choose between logging to files or transmitting logs to a remote server.
+- **Configurable Output**: Choose between logging to console, files, or transmitting logs to a remote server.
+- **Web UI**: Visualize logs and system performance metrics through a customizable dashboard.
 
 ## Installation
 
@@ -84,13 +85,13 @@ except ZeroDivisionError:
 
 ### Remote Logging Configuration
 
-```python
+```python{7,10}
 from tracebook.config import RemoteConfig
 
 remote_logger = Logger(
     config=Config(
         log_level=LogLevel.INFO,
-        output="remote",
+        output="file",
         remote_config=RemoteConfig(
             url="https://logs.example.com",
             headers={"Authorization": "Bearer your-token"}
@@ -103,6 +104,46 @@ def important_function():
     # Function logic here
     pass
 ```
+
+Internally teacebook will do a `POST` call to your server with the file as the payload.
+
+```sh
+curl -X POST "http://example.com/upload" \
+     -H "Content-Type: multipart/form-data" \
+     -H "Authorization: Bearer your_token_here" \
+     -F "file=@/path/to/your/logfile.log"
+```
+
+### Web UI Configuration
+
+```python
+from tracebook.config import WebUIConfig
+
+web_logger = Logger(
+    config=Config(
+        log_level=LogLevel.INFO,
+        output="both",
+        web_config=WebUIConfig(
+            title="My TraceBook Dashboard",
+            foreground_color="#123456",
+            background_color="#F0F0F0",
+            show_star_on_github=True,
+            indent_logs=True,
+            is_active=True,
+            port=2234,
+            refresh_interval=2000,
+            max_data_points=200,
+
+        )
+    )
+)
+
+@web_logger.trace()
+def monitor_system():
+    # Function logic here
+    pass
+```
+
 ### Configuring Log Levels and Output
 
 Control the verbosity of logs by setting the log level and choosing the output:
@@ -125,7 +166,6 @@ def my_function(param1, param2):
 
 my_function(1, 2)
 ```
-
 
 ## License
 

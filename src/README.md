@@ -1,5 +1,3 @@
-Here's the updated README with the new configuration details integrated:
-
 # Trace Book
 
 **Trace Book** is a Python package designed for comprehensive code bookkeeping. It provides tools to log function calls, parameters, return values, and execution times. Additionally, it supports decorators for easy integration, automatic error tracking, and remote log transmission, all with customizable log levels and output configurations.
@@ -87,13 +85,13 @@ except ZeroDivisionError:
 
 ### Remote Logging Configuration
 
-```python
+```python{7,10}
 from tracebook.config import RemoteConfig
 
 remote_logger = Logger(
     config=Config(
         log_level=LogLevel.INFO,
-        output="remote",
+        output="file",
         remote_config=RemoteConfig(
             url="https://logs.example.com",
             headers={"Authorization": "Bearer your-token"}
@@ -105,6 +103,15 @@ remote_logger = Logger(
 def important_function():
     # Function logic here
     pass
+```
+
+Internally teacebook will do a `POST` call to your server with the file as the payload.
+
+```sh
+curl -X POST "http://example.com/upload" \
+     -H "Content-Type: multipart/form-data" \
+     -H "Authorization: Bearer your_token_here" \
+     -F "file=@/path/to/your/logfile.log"
 ```
 
 ### Web UI Configuration
