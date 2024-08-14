@@ -1,6 +1,10 @@
+Here's the updated README with the new configuration details integrated:
+
 # Trace Book
 
 **Trace Book** is a Python package designed for comprehensive code bookkeeping. It provides tools to log function calls, parameters, return values, and execution times. Additionally, it supports decorators for easy integration, automatic error tracking, and remote log transmission, all with customizable log levels and output configurations.
+
+![UI](./example/example-ui.png)
 
 ## Features
 
@@ -9,7 +13,8 @@
 - **Decorators**: Simplify logging with decorators that track function parameters and results.
 - **Remote Log Transmission**: Securely send logs to a remote server.
 - **Customizable Log Levels**: Control log verbosity with DEBUG, INFO, WARNING, and ERROR levels.
-- **Configurable Output**: Choose between logging to files or transmitting logs to a remote server.
+- **Configurable Output**: Choose between logging to console, files, or transmitting logs to a remote server.
+- **Web UI**: Visualize logs and system performance metrics through a customizable dashboard.
 
 ## Installation
 
@@ -101,6 +106,38 @@ def important_function():
     # Function logic here
     pass
 ```
+
+### Web UI Configuration
+
+```python
+from tracebook.config import WebUIConfig
+
+web_logger = Logger(
+    config=Config(
+        log_level=LogLevel.INFO,
+        output="both",
+        web_config=WebUIConfig(
+            title="My TraceBook Dashboard",
+            foreground_color="#123456",
+            background_color="#F0F0F0",
+            show_star_on_github=True,
+            indent_logs=True,
+            is_active=True,
+            port=2234,
+            refresh_interval=2000,
+            max_data_points=200,
+            auth_username="admin",
+            auth_password="password"
+        )
+    )
+)
+
+@web_logger.trace()
+def monitor_system():
+    # Function logic here
+    pass
+```
+
 ### Configuring Log Levels and Output
 
 Control the verbosity of logs by setting the log level and choosing the output:
@@ -123,7 +160,6 @@ def my_function(param1, param2):
 
 my_function(1, 2)
 ```
-
 
 ## License
 

@@ -12,6 +12,56 @@ class LogLevel(Enum):
     CRITICAL = 50
 
 
+class WebUIConfig:
+    """
+    Configuration for the web UI.
+    """
+
+    def __init__(
+        self,
+        title: str = "TraceBook",
+        foreground_color: str = "#0056b3",
+        background_color: str = "#E6F2FF",
+        show_star_on_github: bool = True,
+        indent_logs: bool = True,
+        is_active: bool = True,
+        port: int = 2234,
+        refresh_interval: int = 1000,
+        max_data_points: int = 100,
+        auth_username: str = "admin",
+        auth_password: str = "admin",
+    ):
+        """
+        Initialize the web UI configuration.
+
+        Args:
+            title (str): The title of the web UI.
+            foreground_color (str): The foreground color of the web UI.
+            background_color (str): The background color of the web UI.
+            show_star_on_github (bool): Whether to show the star on GitHub.
+            indent_logs (bool): Whether to indent the logs.
+            is_active (bool): Whether the web UI is active.
+            port (int): The port to use for the web UI.
+            refresh_interval (int): The refresh interval in milliseconds.
+            max_data_points (int): The maximum number of data points to show.
+            auth_username (str): The username for authentication.
+            auth_password (str): The password for authentication.
+        """
+        self.title = title
+        self.foreground_color = foreground_color
+        self.background_color = background_color
+        self.show_star_on_github = show_star_on_github
+        self.indent_logs = indent_logs
+        self.is_active = is_active
+        self.port = port
+        self.refresh_interval = refresh_interval
+        self.max_data_points = max_data_points
+
+        self.auth_username = auth_username
+        self.auth_password = auth_password
+
+
+
 class RemoteConfig:
     """
     Configuration for remote logging.
@@ -23,7 +73,8 @@ class RemoteConfig:
 
         Args:
             url (str): The URL of the remote logging server.
-            token (str): The authentication token for the remote logging server.
+            headers (dict): The headers for the remote logging server.
+            use (bool): Whether to use the remote logging server.
         """
         self.url = url
         self.headers = headers
@@ -38,27 +89,26 @@ class Config:
     def __init__(
         self,
         log_level=LogLevel.INFO,
-        show_web = True,
-        web_port=2234,
         output=Literal["console", "file", "both"],
         file_path=None,
         remote_config: RemoteConfig = None,
+        web_config: WebUIConfig = None,
     ):
         """
         Initialize the configuration.
 
         Args:
-            log_level (LogLevel): The minimum level of logs to capture.
-            output (str): Where to send the logs ('console', 'file', or 'both').
-            file_path (str): The path to the log file (required if output includes 'file').
-            remote_config (dict): Configuration for remote logging (optional).
+            log_level (LogLevel): The log level to use.
+            output (str): The output destination to use.
+            file_path (str): The file path to use for logging.
+            remote_config (RemoteConfig): The remote logging configuration.
+            web_config (WebUIConfig): The web UI configuration.
         """
         self.log_level = log_level
         self.output = output
-        self.show_web = show_web
-        self.web_port = web_port
         self.file_path = file_path
         self.remote_config = remote_config or RemoteConfig(None, None, False)
+        self.web_config = web_config or WebUIConfig()
 
     def get_log_level(self):
         """

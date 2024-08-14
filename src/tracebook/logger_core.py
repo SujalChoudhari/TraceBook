@@ -1,10 +1,10 @@
 # logger.py
 import logging
-from functools import wraps
 from typing import Literal
+
 from tracebook.config import Config, LogLevel
 from tracebook.remote_handler import log_push_file_to_remote_server
-from tracebook.utils import current_timestamp, get_memory_usage, get_cpu_usage
+from tracebook.utils import current_timestamp
 
 
 class LoggerCore:
@@ -15,10 +15,11 @@ class LoggerCore:
         if self.config.remote_config.use:
             log_push_file_to_remote_server(self.config)
 
-        if self.config.show_web:
+        if self.config.web_config.is_active:
             from tracebook.dashboard import RealTimeDashboard
+
             self.dashboard = RealTimeDashboard(
-                self.config.file_path, self.config.web_port
+                self.config
             )
             self.dashboard.run()
         else:

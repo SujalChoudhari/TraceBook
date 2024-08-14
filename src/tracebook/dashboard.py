@@ -8,17 +8,17 @@ import time
 import re
 import dash_bootstrap_components as dbc
 
+from tracebook.config import Config
+
 
 class RealTimeDashboard:
-    def __init__(self, logfile_path="path_to_your_logfile.log", port=2234):
-        self.logfile_path = logfile_path
-        self.port = port
-        logging.getLogger("werkzeug").setLevel(logging.ERROR)
+    def __init__(self, config: Config):
+        self.config = config
         self.cpu_usage_data = []
         self.memory_usage_data = []
         self.logs = []
-        self.max_data_points = 100
 
+        logging.getLogger("werkzeug").setLevel(logging.ERROR)
         self.app = Flask(__name__)
         self.dash_app = Dash(
             __name__,
@@ -26,11 +26,15 @@ class RealTimeDashboard:
             url_base_pathname="/",
             external_stylesheets=[dbc.themes.BOOTSTRAP],
         )
+
+        self.build_layout()
+    def build_layout(self):
         self.dash_app.layout = html.Div(
             style={
                 "margin": "0",
-                "backgroundColor": "#E6F2FF",  # Light blue background
+                "backgroundColor": self.config.web_config.background_color,
                 "color": "#333",
+                "minHeight": "100vh",
                 "fontFamily": "'Segoe UI', Arial, sans-serif",
                 "padding": "20px",
             },
@@ -42,7 +46,7 @@ class RealTimeDashboard:
                             "position": "absolute",
                             "top": "10px",
                             "right": "10px",
-                            "backgroundColor": "#007bff",
+                            "backgroundColor": self.config.web_config.foreground_color,
                             "color": "#ffffff",
                             "padding": "5px 10px",
                             "borderRadius": "5px",
@@ -52,12 +56,12 @@ class RealTimeDashboard:
                     ),
                     href="https://github.com/SujalChoudhari/TraceBook",
                     target="_blank",
-                ),
+                ) if self.config.web_config.show_star_on_github else None,
                 html.H1(
-                    "TraceBook Dashboard",
+                    self.config.web_config.title,
                     style={
                         "textAlign": "center",
-                        "color": "#0056b3",  # Darker blue
+                        "color": self.config.web_config.foreground_color,
                         "marginBottom": "30px",
                         "fontSize": "36px",
                         "fontWeight": "bold",
@@ -120,7 +124,11 @@ class RealTimeDashboard:
                         ),
                     ]
                 ),
-                dcc.Interval(id="interval-component", interval=1000, n_intervals=0),
+                dcc.Interval(
+                    id="interval-component",
+                    interval=self.config.web_config.refresh_interval,
+                    n_intervals=0,
+                ),
             ],
         )
 
@@ -134,13 +142,20 @@ class RealTimeDashboard:
         )(self.update_graph)
 
     def update_graph(self, n):
+        return (
+            self.make_cpu_figure(),
+            self.make_memory_figure(),
+            self.make_foramtted_logs(),
+        )
+
+    def make_cpu_figure(self):
         cpu_figure = {
             "data": [
                 go.Scatter(
                     x=[timestamp for timestamp, _ in self.cpu_usage_data],
                     y=[usage for _, usage in self.cpu_usage_data],
                     mode="lines",
-                    line=dict(color="#007bff", width=3),  # Blue color
+                    line=dict(color=self.config.web_config.foreground_color, width=3),
                     fill="tozeroy",
                     fillcolor="rgba(0, 123, 255, 0.2)",
                 )
@@ -166,14 +181,18 @@ class RealTimeDashboard:
                 margin=dict(l=50, r=20, t=50, b=50),
             ),
         }
+        return cpu_figure
 
+    def make_memory_figure(self):
         memory_figure = {
             "data": [
                 go.Scatter(
                     x=[timestamp for timestamp, _ in self.memory_usage_data],
                     y=[usage for _, usage in self.memory_usage_data],
                     mode="lines",
-                    line=dict(color="#007bff", width=3),  # Blue color
+                    line=dict(
+                        color=self.config.web_config.foreground_color, width=3
+                    ),  # Blue color
                     fill="tozeroy",
                     fillcolor="rgba(0, 123, 255, 0.2)",
                 )
@@ -200,6 +219,9 @@ class RealTimeDashboard:
             ),
         }
 
+        return memory_figure
+
+    def make_foramtted_logs(self):
         log_entries = []
         indent = 1
         for log in self.logs[-100:]:
@@ -214,13 +236,16 @@ class RealTimeDashboard:
                 if op in (">", "<"):
                     func_name, args_kwargs = content.split(" ", 1)
                     if op == ">":
-                        indent += 1
+                        indent = indent + 1 if self.config.web_config.indent_logs else 0
                         args, kwargs = args_kwargs.rsplit(" ", 1)
                         log_entry = html.Div(
                             [
                                 html.Span(
                                     info_tag,
-                                    style={"color": info_tag_color, "fontWeight": "bold"},
+                                    style={
+                                        "color": info_tag_color,
+                                        "fontWeight": "bold",
+                                    },
                                 ),
                                 html.Span(f" {time} ", style={"color": "#17a2b8"}),
                                 html.Span(
@@ -245,12 +270,17 @@ class RealTimeDashboard:
                             ]
                         )
                     else:
-                        indent = max(1, indent - 1)
+                        indent = max(
+                            0, indent - 1 if self.config.web_config.indent_logs else 0
+                        )
                         log_entry = html.Div(
                             [
                                 html.Span(
                                     info_tag,
-                                    style={"color": info_tag_color, "fontWeight": "bold"},
+                                    style={
+                                        "color": info_tag_color,
+                                        "fontWeight": "bold",
+                                    },
                                 ),
                                 html.Span(f" {time} ", style={"color": "#17a2b8"}),
                                 html.Span(
@@ -327,16 +357,18 @@ class RealTimeDashboard:
             else:
                 log_entries.append(html.Div(log, style={"color": "#333"}))
 
-        return cpu_figure, memory_figure, log_entries
+        return log_entries
 
     def log_watcher(self):
-        with open(self.logfile_path, "r") as f:
-            f.seek(0, 2)  # Move the cursor to the end of the file
+        with open(self.config.file_path, "r") as f:
+            f.seek(0, 2)
             while True:
-                line = f.readline()
-                if line:
-                    self.logs.append(line.strip())
-                    self.parse_log_line(line.strip())
+                lines = f.readlines()             
+                if lines:
+                    for line in lines:
+                        line = line.strip()
+                        self.logs.append(line)
+                        self.parse_log_line(line)
                 time.sleep(1)
 
     def parse_log_line(self, line):
@@ -352,13 +384,15 @@ class RealTimeDashboard:
             self.memory_usage_data.append((timestamp, float(memory_usage)))
 
             # Keep only the most recent data points
-            if len(self.cpu_usage_data) > self.max_data_points:
+            if len(self.cpu_usage_data) > self.config.web_config.max_data_points:
                 self.cpu_usage_data = self.cpu_usage_data[-self.max_data_points :]
-            if len(self.memory_usage_data) > self.max_data_points:
+            if len(self.memory_usage_data) > self.config.web_config.max_data_points:
                 self.memory_usage_data = self.memory_usage_data[-self.max_data_points :]
 
     def start_server(self):
-        self.app.run(host="localhost", port=self.port, use_reloader=False)
+        self.app.run(
+            host="localhost", port=self.config.web_config.port, use_reloader=False
+        )
 
     def run(self):
         # Start log watcher thread
@@ -371,7 +405,7 @@ class RealTimeDashboard:
 
         # You can add any other code here that needs to run concurrently
         print(
-            f"Dashboard is running in the background at http://localhost:{self.port}."
+            f"Dashboard is running in the background at http://localhost:{self.config.web_config.port}."
         )
 
     def format_tag(self, tag):
@@ -399,6 +433,7 @@ class RealTimeDashboard:
         elif tag == "[DBG]":
             color = "#6c757d"
         return color
+
 
 # Usage:
 if __name__ == "__main__":
