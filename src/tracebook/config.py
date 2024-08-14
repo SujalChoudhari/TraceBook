@@ -28,8 +28,6 @@ class WebUIConfig:
         port: int = 2234,
         refresh_interval: int = 1000,
         max_data_points: int = 100,
-        auth_username: str = "admin",
-        auth_password: str = "admin",
     ):
         """
         Initialize the web UI configuration.
@@ -44,8 +42,6 @@ class WebUIConfig:
             port (int): The port to use for the web UI.
             refresh_interval (int): The refresh interval in milliseconds.
             max_data_points (int): The maximum number of data points to show.
-            auth_username (str): The username for authentication.
-            auth_password (str): The password for authentication.
         """
         self.title = title
         self.foreground_color = foreground_color
@@ -56,9 +52,6 @@ class WebUIConfig:
         self.port = port
         self.refresh_interval = refresh_interval
         self.max_data_points = max_data_points
-
-        self.auth_username = auth_username
-        self.auth_password = auth_password
 
 
 

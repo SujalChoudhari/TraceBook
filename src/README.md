@@ -4,7 +4,7 @@ Here's the updated README with the new configuration details integrated:
 
 **Trace Book** is a Python package designed for comprehensive code bookkeeping. It provides tools to log function calls, parameters, return values, and execution times. Additionally, it supports decorators for easy integration, automatic error tracking, and remote log transmission, all with customizable log levels and output configurations.
 
-![UI](./example/example-ui.png)
+![UI](https://raw.githubusercontent.com/SujalChoudhari/TraceBook/main/example/example-ui.png)
 
 ## Features
 
@@ -126,8 +126,7 @@ web_logger = Logger(
             port=2234,
             refresh_interval=2000,
             max_data_points=200,
-            auth_username="admin",
-            auth_password="password"
+
         )
     )
 )

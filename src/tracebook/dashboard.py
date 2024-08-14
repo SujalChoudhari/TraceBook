@@ -2,7 +2,6 @@ import logging
 import threading
 from flask import Flask
 from dash import Dash, dcc, html, Input, Output
-from dash.dash_table import DataTable
 import plotly.graph_objs as go
 import time
 import re
@@ -28,6 +27,7 @@ class RealTimeDashboard:
         )
 
         self.build_layout()
+
     def build_layout(self):
         self.dash_app.layout = html.Div(
             style={
@@ -56,7 +56,9 @@ class RealTimeDashboard:
                     ),
                     href="https://github.com/SujalChoudhari/TraceBook",
                     target="_blank",
-                ) if self.config.web_config.show_star_on_github else None,
+                )
+                if self.config.web_config.show_star_on_github
+                else None,
                 html.H1(
                     self.config.web_config.title,
                     style={
@@ -258,7 +260,7 @@ class RealTimeDashboard:
                                     },
                                 ),
                                 html.Span(
-                                    func_name,
+                                    f" {func_name} ",
                                     style={"color": "#6610f2", "fontWeight": "bold"},
                                 ),
                                 html.Span(
@@ -266,7 +268,7 @@ class RealTimeDashboard:
                                 ),
                                 html.Span(
                                     f" Kwargs: {kwargs}", style={"color": "#e83e8c"}
-                                ),
+                                ) if kwargs != "{}" else "",
                             ]
                         )
                     else:
@@ -293,7 +295,7 @@ class RealTimeDashboard:
                                     },
                                 ),
                                 html.Span(
-                                    func_name,
+                                    f" {func_name} ",
                                     style={"color": "#6610f2", "fontWeight": "bold"},
                                 ),
                                 html.Span(
@@ -305,7 +307,7 @@ class RealTimeDashboard:
                 elif op == "|":
                     cpu, mem = content.split(" ", 1)
                     if "%" not in cpu:
-                        text_color = "#17a2b8"
+                        text_color = info_tag_color
                     else:
                         text_color = "#dc3545"
                     log_entry = html.Div(
@@ -314,7 +316,7 @@ class RealTimeDashboard:
                                 info_tag,
                                 style={"color": info_tag_color, "fontWeight": "bold"},
                             ),
-                            html.Span(f" {time} ", style={"color": "#17a2b8"}),
+                            html.Span(f" {time} ", style={"color": info_tag_color}),
                             html.Span(
                                 f" {op} ",
                                 style={
@@ -329,19 +331,24 @@ class RealTimeDashboard:
                         ]
                     )
                 elif op == "*":
+                    func_name, content = content.split(" ", 1)
                     log_entry = html.Div(
                         [
                             html.Span(
                                 info_tag,
                                 style={"color": info_tag_color, "fontWeight": "bold"},
                             ),
-                            html.Span(f" {time} ", style={"color": "#ff0000"}),
+                            html.Span(f" {time} ", style={"color": info_tag_color}),
                             html.Span(
                                 f" {op} ",
                                 style={
                                     "color": "#ff7070",
                                     "padding-left": f"{indent * 20}px",
                                 },
+                            ),
+                            html.Span(
+                                f" {func_name} ",
+                                style={"color": "#6610f2", "fontWeight": "bold"},
                             ),
                             html.Span(
                                 f" {content} ",
@@ -363,7 +370,7 @@ class RealTimeDashboard:
         with open(self.config.file_path, "r") as f:
             f.seek(0, 2)
             while True:
-                lines = f.readlines()             
+                lines = f.readlines()
                 if lines:
                     for line in lines:
                         line = line.strip()
@@ -410,7 +417,7 @@ class RealTimeDashboard:
 
     def format_tag(self, tag):
         if tag == "[INFO]":
-            return "[INF]"
+            return "[IFO]"
         elif tag == "[WARNING]":
             return "[WRN]"
         elif tag == "[ERROR]":
@@ -425,7 +432,7 @@ class RealTimeDashboard:
     def get_color_for_tag(self, tag):
         color = "#333"
         if tag == "[WRN]":
-            color = "#ffc107"
+            color = "#a7a700"
         elif tag == "[ERR]":
             color = "#dc3545"
         elif tag == "[CRI]":
